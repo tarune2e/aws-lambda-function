@@ -3,7 +3,7 @@ name: Deploy
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   deploy:
@@ -66,4 +66,4 @@ jobs:
     - name: Deploy
       run: |
         cd ..
-        e2e_cli faas --name="e2e-function-py-f1" --lang="python" redeploy 
+        e2e_cli faas --name="aws-lambda-function" --lang="python" redeploy 
