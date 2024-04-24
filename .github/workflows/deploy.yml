@@ -1,0 +1,69 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        sudo apt-get install -y expect
+  
+
+    - name: Install e2e CLI
+      run: |
+        pip install e2e-cli
+
+    - name: Execute Interactive Command
+      env:
+        APIKEY: ${{ secrets.E2E_API_KEY }}
+        AUTHTOKEN: ${{ secrets.E2E_AUTH_TOKEN }}
+      run: |
+        echo "Starting Interactive Command"
+        # Replace 'your_command_let' with the actual command that requires input
+        # You may need to adjust this command to match your specific use case
+        expect -c '
+            spawn e2e_cli alias add
+            expect "Enter your api key:" 
+            send "$env(APIKEY)\r"
+            expect "Enter your auth token:"
+            send "$env(AUTHTOKEN)\r"
+            expect "Input name of alias you want to add :"
+            send "e2ecreds\r"
+            expect eof
+        '
+    - name: Default Alias Set
+      run: |
+        echo "Starting Interactive Command alias"
+        # Replace 'your_command_let' with the actual command that requires input
+        # You may need to adjust this command to match your specific use case
+        expect -c '
+            spawn e2e_cli alias set
+            expect "Enter name of the alias you want to set as default :" 
+            send "e2ecreds\r"
+            expect "are you sure you want to proceed (y/n):"
+            send "y\r"
+            expect eof
+        '
+    - name: Capture Alias Output
+      id: capture_output_alias_view
+      run: |
+        echo "Running a alias view command..."
+        e2e_cli alias view
+
+    - name: Deploy
+      run: |
+        cd ..
+        e2e_cli faas --name="e2e-function-py-f1" --lang="python" redeploy 
